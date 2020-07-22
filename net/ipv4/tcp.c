@@ -735,9 +735,15 @@ ssize_t tcp_splice_read(struct socket *sock, loff_t *ppos,
 				break;
 			}
 			/* if __tcp_splice_read() got nothing while we have
+<<<<<<< HEAD
 			 * an skb in receive queue, we do not want to loop.
 			 * This might happen with URG data.
 			 */
+=======
+			* an skb in receive queue, we do not want to loop.
+			* This might happen with URG data.
+			*/
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 			if (!skb_queue_empty(&sk->sk_receive_queue))
 				break;
 			sk_wait_data(sk, &timeo);
@@ -3470,6 +3476,7 @@ void __init tcp_init(void)
 	int max_rshare, max_wshare, cnt;
 	unsigned int i;
 
+	BUILD_BUG_ON(TCP_MIN_SND_MSS <= MAX_TCP_OPTION_SPACE);
 	BUILD_BUG_ON(sizeof(struct tcp_skb_cb) > sizeof(skb->cb));
 
 	percpu_counter_init(&tcp_sockets_allocated, 0);

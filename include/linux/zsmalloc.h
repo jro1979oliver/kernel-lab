@@ -35,13 +35,24 @@ enum zs_mapmode {
 };
 
 struct zs_pool_stats {
+<<<<<<< HEAD:include/linux/zsmalloc.h
 	/* How many pages were migrated (freed) */
 	unsigned long pages_compacted;
+=======
+	/* How many pages were compacted (freed) */
+	unsigned long pages_compacted;
+	/* How many pages were migrated */
+	unsigned long pages_moved;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45:drivers/staging/zsmalloc/zsmalloc.h
 };
 
 struct zs_pool;
 
+<<<<<<< HEAD:include/linux/zsmalloc.h
 struct zs_pool *zs_create_pool(char *name);
+=======
+struct zs_pool *zs_create_pool(char *name, gfp_t flags);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45:drivers/staging/zsmalloc/zsmalloc.h
 void zs_destroy_pool(struct zs_pool *pool);
 
 unsigned long zs_malloc(struct zs_pool *pool, size_t size, gfp_t flags);

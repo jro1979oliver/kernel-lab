@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 /* Copyright (c) 2014, 2016, The Linux Foundation. All rights reserved.
+=======
+/* Copyright (c) 2014, 2016-2017, The Linux Foundation. All rights reserved.
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,6 +23,8 @@
 #include <linux/ratelimit.h>
 #include <sound/audio_cal_utils.h>
 
+static int unmap_memory(struct cal_type_data *cal_type,
+			struct cal_block_data *cal_block);
 
 size_t get_cal_info_size(int32_t cal_type)
 {
@@ -128,8 +134,6 @@ size_t get_cal_info_size(int32_t cal_type)
 	case ULP_LSM_CAL_TYPE:
 		size = sizeof(struct audio_cal_info_lsm);
 		break;
-	case DTS_EAGLE_CAL_TYPE:
-		size = 0;
 	case AUDIO_CORE_METAINFO_CAL_TYPE:
 		size = sizeof(struct audio_cal_info_metainfo);
 		break;
@@ -247,8 +251,6 @@ size_t get_user_cal_type_size(int32_t cal_type)
 	case ULP_LSM_CAL_TYPE:
 		size = sizeof(struct audio_cal_type_lsm);
 		break;
-	case DTS_EAGLE_CAL_TYPE:
-		size = 0;
 	case AUDIO_CORE_METAINFO_CAL_TYPE:
 		size = sizeof(struct audio_cal_type_metainfo);
 		break;
@@ -392,16 +394,12 @@ static void destroy_all_cal_blocks(struct cal_type_data *cal_type)
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 
-		if (cal_type->info.cal_util_callbacks.unmap_cal != NULL) {
-			ret = cal_type->info.cal_util_callbacks.
-				unmap_cal(cal_type->info.reg.cal_type,
-					cal_block);
-			if (ret < 0) {
-				pr_err("%s: unmap_cal failed, cal type %d, ret = %d!\n",
-					__func__,
-				       cal_type->info.reg.cal_type,
-					ret);
-			}
+		ret = unmap_memory(cal_type, cal_block);
+		if (ret < 0) {
+			pr_err("%s: unmap_memory failed, cal type %d, ret = %d!\n",
+				__func__,
+			       cal_type->info.reg.cal_type,
+				ret);
 		}
 		delete_cal_block(cal_block);
 		cal_block = NULL;
@@ -647,6 +645,7 @@ static int realloc_memory(struct cal_block_data *cal_block)
 		cal_block->map_data.ion_handle);
 	cal_block->map_data.ion_client = NULL;
 	cal_block->map_data.ion_handle = NULL;
+	cal_block->cal_data.size = 0;
 
 	ret = cal_block_ion_alloc(cal_block);
 	if (ret < 0)

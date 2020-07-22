@@ -72,7 +72,10 @@ tcpmss_mangle_packet(struct sk_buff *skb,
 	tcph = (struct tcphdr *)(skb_network_header(skb) + tcphoff);
 	tcp_hdrlen = tcph->doff * 4;
 
+<<<<<<< HEAD
 	/* Header cannot be larger than the packet */
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	if (len < tcp_hdrlen || tcp_hdrlen < sizeof(struct tcphdr))
 		return -1;
 
@@ -123,7 +126,11 @@ tcpmss_mangle_packet(struct sk_buff *skb,
 		return 0;
 
 	/* tcph->doff has 4 bits, do not wrap it to 0 */
+<<<<<<< HEAD
 	if (tcph->doff >= 15)
+=======
+	if (tcp_hdrlen >= 15 * 4)
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		return 0;
 
 	/*

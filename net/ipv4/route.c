@@ -561,8 +561,12 @@ static void build_sk_flow_key(struct flowi4 *fl4, struct sock *sk)
 			   RT_CONN_FLAGS(sk), RT_SCOPE_UNIVERSE,
 			   inet->hdrincl ? IPPROTO_RAW : sk->sk_protocol,
 			   inet_sk_flowi_flags(sk),
+<<<<<<< HEAD
 			   daddr, inet->inet_saddr, 0, 0,
 			   sock_i_uid(sk));
+=======
+			   daddr, inet->inet_saddr, 0, 0, sock_i_uid(sk));
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	rcu_read_unlock();
 }
 
@@ -621,12 +625,12 @@ static void update_or_create_fnhe(struct fib_nh *nh, __be32 daddr, __be32 gw,
 
 	spin_lock_bh(&fnhe_lock);
 
-	hash = nh->nh_exceptions;
+	hash = rcu_dereference(nh->nh_exceptions);
 	if (!hash) {
 		hash = kzalloc(FNHE_HASH_SIZE * sizeof(*hash), GFP_ATOMIC);
 		if (!hash)
 			goto out_unlock;
-		nh->nh_exceptions = hash;
+		rcu_assign_pointer(nh->nh_exceptions, hash);
 	}
 
 	hash += hval;
@@ -1221,7 +1225,7 @@ static unsigned int ipv4_mtu(const struct dst_entry *dst)
 
 static struct fib_nh_exception *find_exception(struct fib_nh *nh, __be32 daddr)
 {
-	struct fnhe_hash_bucket *hash = nh->nh_exceptions;
+	struct fnhe_hash_bucket *hash = rcu_dereference(nh->nh_exceptions);
 	struct fib_nh_exception *fnhe;
 	u32 hval;
 
@@ -2335,9 +2339,14 @@ static int rt_fill_info(struct net *net,  __be32 dst, __be32 src,
 	    nla_put_u32(skb, RTA_MARK, fl4->flowi4_mark))
 		goto nla_put_failure;
 
+<<<<<<< HEAD
 	if (!uid_eq(fl4->flowi4_uid, INVALID_UID) &&
 	    nla_put_u32(skb, RTA_UID,
 			from_kuid_munged(current_user_ns(), fl4->flowi4_uid)))
+=======
+	if (rt->rt_uid != (uid_t) -1 &&
+	    nla_put_u32(skb, RTA_UID, rt->rt_uid))
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		goto nla_put_failure;
 
 	error = rt->dst.error;

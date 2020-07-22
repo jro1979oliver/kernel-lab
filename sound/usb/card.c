@@ -271,6 +271,14 @@ static int snd_usb_create_streams(struct snd_usb_audio *chip, int ctrlif)
 			return -EINVAL;
 		}
 
+<<<<<<< HEAD
+=======
+		if (h1->bLength < sizeof(*h1)) {
+			dev_err(&dev->dev, "cannot find UAC_HEADER\n");
+			return -EINVAL;
+		}
+
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		if (!h1->bInCollection) {
 			snd_printk(KERN_INFO "skipping empty audio interface (v1)\n");
 			return -EINVAL;
@@ -614,6 +622,7 @@ static void snd_usb_audio_disconnect(struct usb_device *dev,
 {
 	struct snd_card *card;
 	struct list_head *p, *n;
+	struct usb_mixer_interface *mixer;
 
 	if (chip == (void *)-1L)
 		return;
@@ -641,7 +650,8 @@ static void snd_usb_audio_disconnect(struct usb_device *dev,
 		}
 		/* release mixer resources */
 		list_for_each(p, &chip->mixer_list) {
-			snd_usb_mixer_disconnect(p);
+			mixer = list_entry(p, struct usb_mixer_interface, list);
+			snd_usb_mixer_disconnect(mixer);
 		}
 		usb_chip[chip->index] = NULL;
 		mutex_unlock(&register_mutex);

@@ -1533,6 +1533,22 @@ static int soc_check_aux_dev(struct snd_soc_card *card, int num)
 	return -EPROBE_DEFER;
 }
 
+int soc_check_aux_dev_byname(struct snd_soc_card *card, const char *codec_name)
+{
+	struct snd_soc_codec *codec;
+
+	/* find CODEC from registered CODECs*/
+	list_for_each_entry(codec, &codec_list, list) {
+		if (!strcmp(codec->name, codec_name))
+			return 0;
+	}
+
+	dev_err(card->dev, "ASoC: %s not registered\n", codec_name);
+
+	return -EPROBE_DEFER;
+}
+EXPORT_SYMBOL(soc_check_aux_dev_byname);
+
 static int soc_probe_aux_dev(struct snd_soc_card *card, int num)
 {
 	struct snd_soc_aux_dev *aux_dev = &card->aux_dev[num];
@@ -2116,12 +2132,21 @@ unsigned int snd_soc_read(struct snd_soc_codec *codec, unsigned int reg)
 {
 	unsigned int ret;
 
+<<<<<<< HEAD
         if (codec->read) {
 		ret = codec->read(codec, reg);
 		dev_dbg(codec->dev, "read %x => %x\n", reg, ret);
 		trace_snd_soc_reg_read(codec, reg, ret);
         }
         else
+=======
+	if (codec->read) {
+		ret = codec->read(codec, reg);
+		dev_dbg(codec->dev, "read %x => %x\n", reg, ret);
+		trace_snd_soc_reg_read(codec, reg, ret);
+	}
+	else
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		ret = -EIO;
 
 	return ret;
@@ -2135,7 +2160,11 @@ unsigned int snd_soc_write(struct snd_soc_codec *codec,
 		dev_dbg(codec->dev, "write %x = %x\n", reg, val);
 		trace_snd_soc_reg_write(codec, reg, val);
 		return codec->write(codec, reg, val);
+<<<<<<< HEAD
         }
+=======
+	}
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	else
 		return -EIO;
 }
@@ -3695,7 +3724,11 @@ int snd_soc_register_card(struct snd_soc_card *card)
 	if (card->rtd == NULL)
 		return -ENOMEM;
 	card->num_rtd = 0;
-	card->rtd_aux = &card->rtd[card->num_links];
+
+	if (card->num_aux_devs > 0)
+		card->rtd_aux = &card->rtd[card->num_links];
+	else
+		card->rtd_aux = NULL;
 
 	for (i = 0; i < card->num_links; i++)
 		card->rtd[i].dai_link = &card->dai_link[i];

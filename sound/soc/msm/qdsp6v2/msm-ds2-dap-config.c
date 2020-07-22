@@ -1435,7 +1435,11 @@ static int msm_ds2_dap_set_param(u32 cmd, void *arg)
 {
 	int rc = 0, idx, i, j, off, port_id = 0, cdev = 0;
 	int32_t num_device = 0;
+<<<<<<< HEAD
 	int32_t data;
+=======
+	int32_t data = 0;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	int32_t dev_arr[DS2_DSP_SUPPORTED_ENDP_DEVICE] = {0};
 	struct dolby_param_data *dolby_data =  (struct dolby_param_data *)arg;
 
@@ -1484,7 +1488,10 @@ static int msm_ds2_dap_set_param(u32 cmd, void *arg)
 			goto end;
 		}
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		/* cache the parameters */
 		ds2_dap_params[cdev].dap_params_modified[idx] += 1;
 		for (j = 0; j <  dolby_data->length; j++) {
@@ -1711,13 +1718,24 @@ end:
 
 int msm_ds2_dap_set_security_control(u32 cmd, void *arg)
 {
+	int ret = 0;
 	struct dolby_param_license *dolby_license =
 				 ((struct dolby_param_license *)arg);
 	pr_err("%s: dmid %d license key %d\n", __func__,
 		dolby_license->dmid, dolby_license->license_key);
-	core_set_dolby_manufacturer_id(dolby_license->dmid);
-	core_set_license(dolby_license->license_key, DOLBY_DS1_LICENSE_ID);
-	return 0;
+
+	ret = core_set_dolby_manufacturer_id(dolby_license->dmid);
+	if (ret < 0) {
+		pr_err("%s: failed to set dolby manufacturer id",__func__);
+		return ret;
+	}
+
+	ret = core_set_license(dolby_license->license_key, DOLBY_DS1_LICENSE_ID);
+	if (ret < 0) {
+		pr_err("%s: failed to set dolby license",__func__);
+		return ret;
+	}
+	return ret;
 }
 
 int msm_ds2_dap_update_port_parameters(struct snd_hwdep *hw,  struct file *file,

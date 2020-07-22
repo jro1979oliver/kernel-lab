@@ -1354,6 +1354,10 @@ static void render_out_of_line_list(FILE *out)
 			render_opcode(out, "_jump_target(%u),\n", entry);
 			break;
 		default:
+<<<<<<< HEAD
+=======
+			/* shouldn't go here */
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 			break;
 		}
 		if (e->action)

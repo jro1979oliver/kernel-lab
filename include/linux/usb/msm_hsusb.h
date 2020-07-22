@@ -113,6 +113,7 @@ enum msm_usb_phy_type {
 
 #define IDEV_ACA_CHG_MAX	1500
 #define IDEV_ACA_CHG_LIMIT	500
+#define IDEV_HVDCP_CHG_MAX	1800
 
 /**
  * Different states involved in USB charger detection.
@@ -219,6 +220,14 @@ enum usb_ctrl {
 };
 
 /**
+ * USB ID state
+ */
+enum usb_id_state {
+	USB_ID_GROUND = 0,
+	USB_ID_FLOAT,
+};
+
+/**
  * struct msm_otg_platform_data - platform device data
  *              for msm_otg driver.
  * @phy_init_seq: PHY configuration sequence. val, reg pairs
@@ -269,6 +278,10 @@ enum usb_ctrl {
  * @bool disable_retention_with_vdd_min: Indicates whether to enable
 		allowing VDDmin without putting PHY into retention.
  * @usb_id_gpio: Gpio used for USB ID detection.
+ * @hub_reset_gpio: Gpio used for hub reset.
+ * @switch_sel_gpio: Gpio used for controlling switch that
+		routing D+/D- from the USB HUB to the USB jack type B
+		for peripheral mode.
  * @bool phy_dvdd_always_on: PHY DVDD is supplied by always on PMIC LDO.
  * @bool mpp_id_routing: ID is routed via a single MPP that can be used to
 		trigger as well as sample ID voltage.
@@ -307,12 +320,21 @@ struct msm_otg_platform_data {
 	bool enable_ahb2ahb_bypass;
 	bool disable_retention_with_vdd_min;
 	int usb_id_gpio;
+	int hub_reset_gpio;
+	int switch_sel_gpio;
 	bool phy_dvdd_always_on;
+<<<<<<< HEAD
+=======
+	struct clk *system_clk;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	bool mpp_id_routing;
 	unsigned int mpp_id_amux_chan;
 	unsigned int mpp_id_pull;
 	unsigned int mpp_id_vin;
+<<<<<<< HEAD
 	struct clk *system_clk;
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 };
 
 /* phy related flags */
@@ -371,6 +393,8 @@ struct msm_otg_platform_data {
  * @pdata: otg device platform data.
  * @irq: IRQ number assigned for HSUSB controller.
  * @async_irq: IRQ number used by some controllers during low power state
+ * @phy_irq: IRQ number assigned for PHY to notify events like id and line
+		state changes.
  * @pclk: clock struct of iface_clk.
  * @core_clk: clock struct of core_bus_clk.
  * @sleep_clk: clock struct of sleep_clk for USB PHY.
@@ -421,6 +445,14 @@ struct msm_otg_platform_data {
 	     the charger detection starts. When USB is disconnected and in lpm
 	     pm_done is set to true.
  * @ext_id_irq: IRQ for ID interrupt.
+<<<<<<< HEAD
+=======
+ * @phy_irq_pending: Gets set when PHY IRQ arrives in LPM.
+ * @dbg_idx: Dynamic debug buffer Index.
+ * @dbg_lock: Dynamic debug buffer Lock.
+ * @buf: Dynamic Debug Buffer.
+ * @id_state: Indicates USBID line status.
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
  * @falsesdp_retry_count: Counter for number of FALSE_SDP retries
  */
 struct msm_otg {
@@ -428,6 +460,7 @@ struct msm_otg {
 	struct msm_otg_platform_data *pdata;
 	int irq;
 	int async_irq;
+	int phy_irq;
 	struct clk *xo_clk;
 	struct clk *pclk;
 	struct clk *core_clk;
@@ -560,7 +593,21 @@ struct msm_otg {
 	bool pm_done;
 	struct qpnp_vadc_chip	*vadc_dev;
 	int ext_id_irq;
+<<<<<<< HEAD
 	wait_queue_head_t	host_suspend_wait;
+=======
+	bool phy_irq_pending;
+	bool rm_pulldown;
+	wait_queue_head_t	host_suspend_wait;
+/* Maximum debug message length */
+#define DEBUG_MSG_LEN   128UL
+/* Maximum number of messages */
+#define DEBUG_MAX_MSG   256UL
+	unsigned int dbg_idx;
+	rwlock_t dbg_lock;
+	char (buf[DEBUG_MAX_MSG])[DEBUG_MSG_LEN];   /* buffer */
+	enum usb_id_state id_state;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	int falsesdp_retry_count;
 };
 
@@ -695,6 +742,16 @@ void msm_hw_bam_disable(bool bam_disable);
 static inline void msm_hw_bam_disable(bool bam_disable)
 {
 }
+#endif
+
+/* CONFIG_PM_RUNTIME */
+#ifdef CONFIG_PM_RUNTIME
+static inline int get_pm_runtime_counter(struct device *dev)
+{
+	return atomic_read(&dev->power.usage_count);
+}
+#else /* !CONFIG_PM_RUNTIME */
+static inline int get_pm_runtime_counter(struct device *dev) { return -ENOSYS; }
 #endif
 
 #ifdef CONFIG_USB_DWC3_MSM

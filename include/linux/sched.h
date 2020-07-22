@@ -25,7 +25,7 @@ struct sched_param {
 
 #include <asm/page.h>
 #include <asm/ptrace.h>
-#include <asm/cputime.h>
+#include <linux/cputime.h>
 
 #include <linux/smp.h>
 #include <linux/sem.h>
@@ -174,8 +174,8 @@ extern unsigned long nr_iowait(void);
 extern unsigned long nr_iowait_cpu(int cpu);
 extern unsigned long this_cpu_load(void);
 
-extern void sched_update_nr_prod(int cpu, unsigned long nr, bool inc);
-extern void sched_get_nr_running_avg(int *avg, int *iowait_avg);
+extern void sched_update_nr_prod(int cpu, long delta, bool inc);
+extern void sched_get_nr_running_avg(int *avg, int *iowait_avg, int *big_avg);
 
 extern void calc_global_load(unsigned long ticks);
 extern void update_cpu_load_nohz(void);
@@ -737,6 +737,16 @@ struct signal_struct {
 #define SIGNAL_CLD_MASK		(SIGNAL_CLD_STOPPED|SIGNAL_CLD_CONTINUED)
 
 #define SIGNAL_UNKILLABLE	0x00000040 /* for init: ignore fatal signals */
+
+#define SIGNAL_STOP_MASK (SIGNAL_CLD_MASK | SIGNAL_STOP_STOPPED | \
+			  SIGNAL_STOP_CONTINUED)
+
+static inline void signal_set_stop_flags(struct signal_struct *sig,
+					 unsigned int flags)
+{
+	WARN_ON(sig->flags & (SIGNAL_GROUP_EXIT|SIGNAL_GROUP_COREDUMP));
+	sig->flags = (sig->flags & ~SIGNAL_STOP_MASK) | flags;
+}
 
 /* If true, all threads except ->group_exit_task have pending SIGKILL */
 static inline int signal_group_exit(const struct signal_struct *sig)
@@ -1332,6 +1342,11 @@ struct task_struct {
 
 	cputime_t utime, stime, utimescaled, stimescaled;
 	cputime_t gtime;
+<<<<<<< HEAD
+=======
+	atomic64_t *time_in_state;
+	unsigned int max_states;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	unsigned long long cpu_power;
 #ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
 	struct cputime prev_cputime;
@@ -1592,9 +1607,14 @@ struct task_struct {
 	unsigned int	sequential_io;
 	unsigned int	sequential_io_avg;
 #endif
+<<<<<<< HEAD
 #ifdef CONFIG_TASK_CPUFREQ_STATS
 	struct task_cpufreq_stats cpufreq_stats[NR_CPUS];
 #endif
+=======
+	atomic64_t *concurrent_active_time;
+	atomic64_t *concurrent_policy_time;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 };
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
@@ -1630,6 +1650,7 @@ static inline void add_2_adj_tree(struct task_struct *task) { }
 static inline void delete_from_adj_tree(struct task_struct *task) { }
 #endif
 
+<<<<<<< HEAD
 #ifdef CONFIG_TASK_CPUFREQ_STATS
 static inline void task_update_time_in_state(struct task_struct *task, int cpu)
 {
@@ -1643,6 +1664,8 @@ static inline void task_update_cumulative_time_in_state(struct task_struct *task
 	update_cumulative_time_in_state(task, parent, cpu);
 }
 #endif
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 /*
  * Without tasklist or rcu lock it is not safe to dereference
  * the result of task_pgrp/task_session even if task == current,
@@ -2944,6 +2967,11 @@ static inline void inc_syscw(struct task_struct *tsk)
 {
 	tsk->ioac.syscw++;
 }
+
+static inline void inc_syscfs(struct task_struct *tsk)
+{
+	tsk->ioac.syscfs++;
+}
 #else
 static inline void add_rchar(struct task_struct *tsk, ssize_t amt)
 {
@@ -2958,6 +2986,9 @@ static inline void inc_syscr(struct task_struct *tsk)
 }
 
 static inline void inc_syscw(struct task_struct *tsk)
+{
+}
+static inline void inc_syscfs(struct task_struct *tsk)
 {
 }
 #endif

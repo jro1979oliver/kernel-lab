@@ -36,12 +36,16 @@
 #include <linux/export.h>
 #include <linux/jiffies.h>
 #include <linux/random.h>
+<<<<<<< HEAD
 #include <linux/sched.h>
 #include <asm/unaligned.h>
 
 #ifdef CONFIG_RANDOM32_SELFTEST
 static void __init prandom_state_selftest(void);
 #endif
+=======
+#include <linux/timer.h>
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 static DEFINE_PER_CPU(struct rnd_state, net_rand_state);
 
@@ -176,9 +180,14 @@ void prandom_seed(u32 entropy)
 	 */
 	for_each_possible_cpu(i) {
 		struct rnd_state *state = &per_cpu(net_rand_state, i);
+<<<<<<< HEAD
 
 		state->s1 = __seed(state->s1 ^ entropy, 2U);
 		prandom_warmup(state);
+=======
+		state->s1 = __seed(state->s1 ^ entropy, 2);
+		prandom_u32_state(state);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	}
 }
 EXPORT_SYMBOL(prandom_seed);
@@ -212,6 +221,7 @@ static DEFINE_TIMER(seed_timer, __prandom_timer, 0, 0);
 static void __prandom_timer(unsigned long dontcare)
 {
 	u32 entropy;
+<<<<<<< HEAD
 	unsigned long expires;
 
 	get_random_bytes(&entropy, sizeof(entropy));
@@ -232,8 +242,39 @@ static void __init __prandom_start_seed_timer(void)
 }
 
 static void prandom_seed_full_state(struct rnd_state __percpu *pcpu_state)
+=======
+
+	get_random_bytes(&entropy, sizeof(entropy));
+	prandom_seed(entropy);
+	/* reseed every ~60 seconds, in [40 .. 80) interval with slack */
+	seed_timer.expires = jiffies + (40 * HZ + (prandom_u32() % (40 * HZ)));
+	add_timer(&seed_timer);
+}
+
+static void prandom_start_seed_timer(void)
+{
+	set_timer_slack(&seed_timer, HZ);
+	seed_timer.expires = jiffies + 40 * HZ;
+	add_timer(&seed_timer);
+}
+
+/*
+ *	Generate better values after random number generator
+ *	is fully initialized.
+ */
+static void __prandom_reseed(bool late)
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 {
 	int i;
+	unsigned long flags;
+	static bool latch = false;
+	static DEFINE_SPINLOCK(lock);
+
+	/* only allow initial seeding (late == false) once */
+	spin_lock_irqsave(&lock, flags);
+	if (latch && !late)
+		goto out;
+	latch = true;
 
 	for_each_possible_cpu(i) {
 		struct rnd_state *state = per_cpu_ptr(pcpu_state, i);
@@ -247,6 +288,7 @@ static void prandom_seed_full_state(struct rnd_state __percpu *pcpu_state)
 
 		prandom_warmup(state);
 	}
+<<<<<<< HEAD
 }
 
 /*
@@ -277,6 +319,8 @@ static void __prandom_reseed(bool late)
 
 	latch = true;
 	prandom_seed_full_state(&net_rand_state);
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 out:
 	spin_unlock_irqrestore(&lock, flags);
 }
@@ -289,7 +333,11 @@ void prandom_reseed_late(void)
 static int __init prandom_reseed(void)
 {
 	__prandom_reseed(false);
+<<<<<<< HEAD
 	__prandom_start_seed_timer();
+=======
+	prandom_start_seed_timer();
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	return 0;
 }
 late_initcall(prandom_reseed);

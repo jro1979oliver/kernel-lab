@@ -2075,7 +2075,11 @@ static int parse_audio_unit(struct mixer_build *state, int unitid)
 static void snd_usb_mixer_free(struct usb_mixer_interface *mixer)
 {
 	/* kill pending URBs */
+<<<<<<< HEAD
 	snd_usb_mixer_disconnect(&mixer->list);
+=======
+	snd_usb_mixer_disconnect(mixer);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 	kfree(mixer->id_elems);
 	if (mixer->urb) {
@@ -2418,11 +2422,14 @@ _error:
 	return err;
 }
 
-void snd_usb_mixer_disconnect(struct list_head *p)
+void snd_usb_mixer_disconnect(struct usb_mixer_interface *mixer)
 {
+<<<<<<< HEAD
 	struct usb_mixer_interface *mixer;
 
 	mixer = list_entry(p, struct usb_mixer_interface, list);
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	if (mixer->disconnected)
 		return;
 	if (mixer->urb)

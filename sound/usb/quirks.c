@@ -171,7 +171,11 @@ static int create_fixed_stream_quirk(struct snd_usb_audio *chip,
 	snd_usb_init_sample_rate(chip, fp->iface, alts, fp, fp->rate_max);
 	return 0;
 
+<<<<<<< HEAD
  error:
+=======
+error:
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	list_del(&fp->list); /* unlink for avoiding double-free */
 	kfree(fp);
 	kfree(rate_table);

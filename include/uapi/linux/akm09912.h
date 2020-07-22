@@ -98,3 +98,7 @@ struct akm09912_platform_data {
 };
 
 #endif
+<<<<<<< HEAD
+=======
+
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45

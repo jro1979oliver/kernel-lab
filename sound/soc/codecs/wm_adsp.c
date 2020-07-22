@@ -1137,6 +1137,7 @@ static int wm_adsp_create_control(struct wm_adsp *dsp,
 		break;
 	case WMFW_ADSP1_DM:
 		region_name = "DM";
+<<<<<<< HEAD
 		break;
 	case WMFW_ADSP2_XM:
 		region_name = "XM";
@@ -1147,6 +1148,18 @@ static int wm_adsp_create_control(struct wm_adsp *dsp,
 	case WMFW_ADSP1_ZM:
 		region_name = "ZM";
 		break;
+=======
+		break;
+	case WMFW_ADSP2_XM:
+		region_name = "XM";
+		break;
+	case WMFW_ADSP2_YM:
+		region_name = "YM";
+		break;
+	case WMFW_ADSP1_ZM:
+		region_name = "ZM";
+		break;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	default:
 		kfree(name);
 		return -EINVAL;
@@ -1190,6 +1203,238 @@ static int wm_adsp_create_control(struct wm_adsp *dsp,
 		goto err_ctl_name;
 	}
 	mutex_init(&ctl->lock);
+<<<<<<< HEAD
+
+	ctl_work = kzalloc(sizeof(*ctl_work), GFP_KERNEL);
+	if (!ctl_work) {
+		ret = -ENOMEM;
+		goto err_ctl_cache;
+	}
+
+	ctl_work->adsp = dsp;
+	ctl_work->ctl = ctl;
+	INIT_WORK(&ctl_work->work, wm_adsp_ctl_work);
+	schedule_work(&ctl_work->work);
+
+	kfree(name);
+
+	return 0;
+
+err_ctl_cache:
+	kfree(ctl->cache);
+err_ctl_name:
+	kfree(ctl->name);
+err_ctl:
+	kfree(ctl);
+err_name:
+	kfree(name);
+	return ret;
+}
+
+static int wm_adsp_create_grouped_control(struct wm_adsp *dsp,
+					  struct wm_adsp_alg_region *region,
+					  bool create)
+{
+	size_t len = region->len, offset = 0;
+	struct wm_adsp_alg_region *r;
+	int ret;
+
+	/* This is the quick case for control groups of a single block */
+	if (region->len <= 512)
+		return wm_adsp_create_control(dsp, region);
+
+	/* The passed `region' is already in the list
+	 * of algorithm regions so just create the control for it and don't
+	 * add it to the list */
+	region->len = 512;
+	ret = wm_adsp_create_control(dsp, region);
+	if (ret < 0)
+		return ret;
+	offset += 512;
+
+	/* Carve up the entire region into 512-byte chunks */
+	do {
+		r = kzalloc(sizeof(*r), GFP_KERNEL);
+		if (!r)
+			return -ENOMEM;
+		r->block = offset / 512;
+		r->type = region->type;
+		r->alg = region->alg;
+		r->base = region->base + offset / 4;
+		if (len - offset > 512)
+			r->len = 512;
+		else
+			r->len = len - offset;
+		offset += r->len;
+
+		list_add_tail(&r->list, &dsp->alg_regions);
+		if (create) {
+			ret = wm_adsp_create_control(dsp, r);
+			if (ret < 0)
+				return ret;
+		}
+	} while (offset < len);
+
+	return 0;
+}
+
+static int wm_adsp1_fixup_region_base(struct wm_adsp *dsp,
+				      struct wmfw_adsp1_alg_hdr *hdr)
+{
+	int adsp1_region_types[] = { WMFW_ADSP1_ZM, WMFW_ADSP1_DM };
+	struct wm_adsp_alg_region *region;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(adsp1_region_types); i++) {
+		list_for_each_entry(region, &dsp->alg_regions, list) {
+			if (region->alg == be32_to_cpu(hdr->alg.id)
+			    && region->type == adsp1_region_types[i]) {
+				switch (region->type) {
+				case WMFW_ADSP1_ZM:
+					region->base = be32_to_cpu(hdr->zm);
+					break;
+				case WMFW_ADSP1_DM:
+					region->base = be32_to_cpu(hdr->dm);
+					break;
+				}
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int wm_adsp2_fixup_region_base(struct wm_adsp *dsp,
+				      struct wmfw_adsp2_alg_hdr *hdr)
+{
+	int adsp2_region_types[] = { WMFW_ADSP2_ZM, WMFW_ADSP2_YM, WMFW_ADSP2_XM };
+	struct wm_adsp_alg_region *region;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(adsp2_region_types); i++) {
+		list_for_each_entry(region, &dsp->alg_regions, list) {
+			if (region->alg == be32_to_cpu(hdr->alg.id)
+			    && region->type == adsp2_region_types[i]) {
+				switch (region->type) {
+				case WMFW_ADSP2_ZM:
+					region->base = be32_to_cpu(hdr->zm);
+					break;
+				case WMFW_ADSP2_YM:
+					region->base = be32_to_cpu(hdr->ym);
+					break;
+				case WMFW_ADSP2_XM:
+					region->base = be32_to_cpu(hdr->xm);
+					break;
+				}
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int wm_adsp_setup_algs(struct wm_adsp *dsp)
+{
+	struct regmap *regmap = dsp->regmap;
+	struct wmfw_adsp1_id_hdr adsp1_id;
+	struct wmfw_adsp2_id_hdr adsp2_id;
+	struct wmfw_adsp1_alg_hdr *adsp1_alg, adsp1_alg_tmp;
+	struct wmfw_adsp2_alg_hdr *adsp2_alg, adsp2_alg_tmp;
+	void *alg, *buf;
+	struct wm_adsp_alg_region *region;
+	const struct wm_adsp_region *mem;
+	unsigned int pos, term;
+	size_t algs, buf_size;
+	__be32 val;
+	int i, ret;
+
+	switch (dsp->type) {
+	case WMFW_ADSP1:
+		mem = wm_adsp_find_region(dsp, WMFW_ADSP1_DM);
+		break;
+	case WMFW_ADSP2:
+		mem = wm_adsp_find_region(dsp, WMFW_ADSP2_XM);
+		break;
+	default:
+		mem = NULL;
+		break;
+	}
+
+	if (mem == NULL) {
+		BUG_ON(mem != NULL);
+		return -EINVAL;
+	}
+
+	switch (dsp->type) {
+	case WMFW_ADSP1:
+		ret = regmap_raw_read(regmap, mem->base, &adsp1_id,
+				      sizeof(adsp1_id));
+		if (ret != 0) {
+			adsp_err(dsp, "Failed to read algorithm info: %d\n",
+				 ret);
+			return ret;
+		}
+
+		buf = &adsp1_id;
+		buf_size = sizeof(adsp1_id);
+
+		algs = be32_to_cpu(adsp1_id.algs);
+		dsp->fw_id = be32_to_cpu(adsp1_id.fw.id);
+		adsp_dbg(dsp, "Firmware: %x v%d.%d.%d, %zu algorithms\n",
+			  dsp->fw_id,
+			  (be32_to_cpu(adsp1_id.fw.ver) & 0xff0000) >> 16,
+			  (be32_to_cpu(adsp1_id.fw.ver) & 0xff00) >> 8,
+			  be32_to_cpu(adsp1_id.fw.ver) & 0xff,
+			  algs);
+
+		if (dsp->fw_ver > 0) {
+			/* Translate `wmfw_adsp1_id_hdr' to `wmfw_adsp1_alg_hdr' */
+			adsp1_alg_tmp.alg.id = adsp1_id.fw.id;
+			adsp1_alg_tmp.alg.ver = adsp1_id.fw.ver;
+			adsp1_alg_tmp.zm = adsp1_id.zm;
+			adsp1_alg_tmp.dm = adsp1_id.dm;
+			wm_adsp1_fixup_region_base(dsp, &adsp1_alg_tmp);
+			list_for_each_entry(region, &dsp->alg_regions, list) {
+				if (region->alg == be32_to_cpu(adsp1_alg_tmp.alg.id))
+					wm_adsp_create_grouped_control(dsp, region, false);
+			}
+		} else {
+			region = kzalloc(sizeof(*region), GFP_KERNEL);
+			if (!region)
+				return -ENOMEM;
+			region->type = WMFW_ADSP1_ZM;
+			region->alg = be32_to_cpu(adsp1_id.fw.id);
+			region->base = be32_to_cpu(adsp1_id.zm);
+			list_add_tail(&region->list, &dsp->alg_regions);
+
+			region = kzalloc(sizeof(*region), GFP_KERNEL);
+			if (!region)
+				return -ENOMEM;
+			region->type = WMFW_ADSP1_DM;
+			region->alg = be32_to_cpu(adsp1_id.fw.id);
+			region->base = be32_to_cpu(adsp1_id.dm);
+			list_add_tail(&region->list, &dsp->alg_regions);
+		}
+
+		pos = sizeof(adsp1_id) / 2;
+		term = pos + ((sizeof(*adsp1_alg) * algs) / 2);
+		break;
+
+	case WMFW_ADSP2:
+		ret = regmap_raw_read(regmap, mem->base, &adsp2_id,
+				      sizeof(adsp2_id));
+		if (ret != 0) {
+			adsp_err(dsp, "Failed to read algorithm info: %d\n",
+				 ret);
+			return ret;
+		}
+
+		buf = &adsp2_id;
+		buf_size = sizeof(adsp2_id);
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 	ctl_work = kzalloc(sizeof(*ctl_work), GFP_KERNEL);
 	if (!ctl_work) {
@@ -3433,5 +3678,8 @@ int wm_adsp_stream_avail(const struct wm_adsp *adsp)
 			adsp->capt_buf_size);
 }
 EXPORT_SYMBOL_GPL(wm_adsp_stream_avail);
+<<<<<<< HEAD
 
 MODULE_LICENSE("GPL v2");
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45

@@ -2366,6 +2366,15 @@ static int arizona_hw_params(struct snd_pcm_substream *substream,
 	int bclk, lrclk, wl, frame, bclk_target;
 	bool reconfig;
 	unsigned int aif_tx_state, aif_rx_state;
+<<<<<<< HEAD
+=======
+
+	/*BODGE to fix the format call that is not made by codec to codec links*/
+	arizona_set_fmt(dai,
+		SND_SOC_DAIFMT_I2S |
+		SND_SOC_DAIFMT_CBM_CFM |
+		SND_SOC_DAIFMT_NB_NF);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 	/*BODGE to fix the format call that is not made by codec to codec links*/
 	arizona_set_fmt(dai,

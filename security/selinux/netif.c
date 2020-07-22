@@ -56,7 +56,11 @@ static struct list_head sel_netif_hash[SEL_NETIF_HASH_SIZE];
  */
 static inline u32 sel_netif_hashfn(const struct net *ns, int ifindex)
 {
+<<<<<<< HEAD
 	return ((uintptr_t)ns + ifindex) & (SEL_NETIF_HASH_SIZE - 1);
+=======
+	return (((uintptr_t)ns + ifindex) & (SEL_NETIF_HASH_SIZE - 1));
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 }
 
 /**

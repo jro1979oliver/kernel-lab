@@ -1092,7 +1092,11 @@ static inline int policy_to_flow_dir(int dir)
 	}
 }
 
+<<<<<<< HEAD
 static struct xfrm_policy *xfrm_sk_policy_lookup(const struct sock *sk, int dir,
+=======
+static struct xfrm_policy *xfrm_sk_policy_lookup(struct sock *sk, int dir,
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 						 const struct flowi *fl, u16 family)
 {
 	struct xfrm_policy *pol;
@@ -1728,7 +1732,10 @@ xfrm_resolve_and_create_bundle(struct xfrm_policy **pols, int num_pols,
 	/* Try to instantiate a bundle */
 	err = xfrm_tmpl_resolve(pols, num_pols, fl, xfrm, family);
 	if (err <= 0) {
-		if (err != 0 && err != -EAGAIN)
+		if (err == 0)
+			return NULL;
+
+		if (err != -EAGAIN)
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTPOLERROR);
 		return ERR_PTR(err);
 	}

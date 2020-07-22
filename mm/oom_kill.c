@@ -104,9 +104,15 @@ static bool has_intersects_mems_allowed(struct task_struct *tsk,
 struct task_struct *find_lock_task_mm(struct task_struct *p)
 {
 	struct task_struct *t;
+<<<<<<< HEAD
 
 	rcu_read_lock();
 
+=======
+
+	rcu_read_lock();
+
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	for_each_thread(p, t) {
 		task_lock(t);
 		if (likely(t->mm))
@@ -465,6 +471,16 @@ void oom_kill_process(struct task_struct *p, gfp_t gfp_mask, int order,
 	 * still freeing memory.
 	 */
 	read_lock(&tasklist_lock);
+<<<<<<< HEAD
+=======
+
+	/*
+	 * The task 'p' might have already exited before reaching here. The
+	 * put_task_struct() will free task_struct 'p' while the loop still try
+	 * to access the field of 'p', so, get an extra reference.
+	 */
+	get_task_struct(p);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	for_each_thread(p, t) {
 		list_for_each_entry(child, &t->children, sibling) {
 			unsigned int child_points;
@@ -484,6 +500,10 @@ void oom_kill_process(struct task_struct *p, gfp_t gfp_mask, int order,
 			}
 		}
 	}
+<<<<<<< HEAD
+=======
+	put_task_struct(p);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	read_unlock(&tasklist_lock);
 
 	p = find_lock_task_mm(victim);

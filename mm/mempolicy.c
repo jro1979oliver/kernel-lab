@@ -1545,10 +1545,17 @@ asmlinkage long compat_sys_set_mempolicy(int mode, compat_ulong_t __user *nmask,
 	alloc_size = ALIGN(nr_bits, BITS_PER_LONG) / 8;
 
 	if (nmask) {
+<<<<<<< HEAD
 		if (compat_get_bitmap(bm, nmask, nr_bits))
 			return -EFAULT;
 		nm = compat_alloc_user_space(alloc_size);
 		if (copy_to_user(nm, bm, alloc_size))
+=======
+		if(compat_get_bitmap(bm, nmask, nr_bits))
+			return -EFAULT;
+		nm = compat_alloc_user_space(alloc_size);
+		if(copy_to_user(nm, bm, alloc_size))
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 			return -EFAULT;
 	}
 
@@ -1567,10 +1574,17 @@ asmlinkage long compat_sys_mbind(compat_ulong_t start, compat_ulong_t len,
 	alloc_size = ALIGN(nr_bits, BITS_PER_LONG) / 8;
 
 	if (nmask) {
+<<<<<<< HEAD
 		if (compat_get_bitmap(nodes_addr(bm), nmask, nr_bits))
 			return -EFAULT;
 		nm = compat_alloc_user_space(alloc_size);
 		if (copy_to_user(nm, nodes_addr(bm), alloc_size))
+=======
+		if(compat_get_bitmap(nodes_addr(bm), nmask, nr_bits))
+			return -EFAULT;
+		nm = compat_alloc_user_space(alloc_size);
+		if(copy_to_user(nm, nodes_addr(bm), alloc_size))
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 			return -EFAULT;
 	}
 
@@ -2054,6 +2068,16 @@ retry_cpuset:
 	return page;
 }
 EXPORT_SYMBOL(alloc_pages_current);
+
+int vma_dup_policy(struct vm_area_struct *src, struct vm_area_struct *dst)
+{
+	struct mempolicy *pol = mpol_dup(vma_policy(src));
+
+	if (IS_ERR(pol))
+		return PTR_ERR(pol);
+	dst->vm_policy = pol;
+	return 0;
+}
 
 /*
  * If mpol_dup() sees current->cpuset == cpuset_being_rebound, then it

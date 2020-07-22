@@ -1,4 +1,5 @@
 # UAPI Header export list
+header-y += android/
 header-y += byteorder/
 header-y += can/
 header-y += caif/
@@ -143,6 +144,7 @@ header-y += genetlink.h
 header-y += gfs2_ondisk.h
 header-y += gigaset_dev.h
 header-y += hbtp_input.h
+header-y += hbtp_vm.h
 header-y += hdlc.h
 header-y += hdlcdrv.h
 header-y += hdreg.h

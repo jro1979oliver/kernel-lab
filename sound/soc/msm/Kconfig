@@ -207,15 +207,24 @@ config SND_SOC_MSM8X16
 	select SND_SOC_MSM_STUB
 	select SND_SOC_MSM_HOSTLESS_PCM
 	select SND_SOC_MSM8X16_WCD
+	select SND_SOC_WSA881X
 	select SLIMBUS
 	select MFD_CORE
 	select SND_DYNAMIC_MINORS
+<<<<<<< HEAD
+=======
+	select QTI_PP
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	select MSM_QDSP6_APRV3
 	select MSM_QDSP6V2_CODECS
 	select SND_SOC_CPE
 	select SND_HWDEP
 	select SND_SOC_FSA8500 if SND_HARPIA_HEADSET_SWH=n
+<<<<<<< HEAD
 	select SND_SOC_TFA9890
+=======
+	select SND_SOC_TFA9890  if SND_HARPIA_HEADSET_SWH=n
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	help
 	 To add support for SoC audio on MSM8X16.
 	 This will enable sound soc drivers which
@@ -230,12 +239,14 @@ config SND_SOC_MSM8909
 	select SND_SOC_MSM_STUB
 	select SND_SOC_MSM_HOSTLESS_PCM
 	select SND_SOC_MSM8909_WCD
+	select SND_SOC_WSA881X
 	select SLIMBUS
 	select MFD_CORE
 	select SND_DYNAMIC_MINORS
 	select QTI_PP
 	select MSM_QDSP6_APRV3
 	select MSM_QDSP6V2_CODECS
+	select SND_SOC_CPE
 	select SND_HWDEP
 	select DOLBY_DS2
 	help

@@ -2638,10 +2638,16 @@ static int inet6_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr* nlh)
 		oif = nla_get_u32(tb[RTA_OIF]);
 
 	if (tb[RTA_UID])
+<<<<<<< HEAD
 		fl6.flowi6_uid = make_kuid(current_user_ns(),
 					   nla_get_u32(tb[RTA_UID]));
 	else
 		fl6.flowi6_uid = iif ? INVALID_UID : current_uid();
+=======
+		fl6.flowi6_uid = nla_get_u32(tb[RTA_UID]);
+	else
+		fl6.flowi6_uid = (iif ? (uid_t) -1 : current_uid());
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 	if (iif) {
 		struct net_device *dev;

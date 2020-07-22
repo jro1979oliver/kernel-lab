@@ -283,9 +283,13 @@ void dst_release(struct dst_entry *dst)
 		unsigned short nocache = dst->flags & DST_NOCACHE;
 
 		newrefcnt = atomic_dec_return(&dst->__refcnt);
+<<<<<<< HEAD
 		if (unlikely(newrefcnt < 0))
 			net_warn_ratelimited("%s: dst:%p refcnt:%d\n",
 					     __func__, dst, newrefcnt);
+=======
+		WARN_ON(newrefcnt < 0);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		if (!newrefcnt && unlikely(nocache))
 			call_rcu(&dst->rcu_head, dst_destroy_rcu);
 	}

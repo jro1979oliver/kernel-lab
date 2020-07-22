@@ -155,7 +155,11 @@ struct ip_reply_arg {
 				/* -1 if not needed */ 
 	int	    bound_dev_if;
 	u8  	    tos;
+<<<<<<< HEAD
 	kuid_t	    uid;
+=======
+	uid_t	    uid;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 }; 
 
 #define IP_REPLY_ARG_NOSRCCHECK 1

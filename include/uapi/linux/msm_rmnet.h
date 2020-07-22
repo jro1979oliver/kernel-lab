@@ -59,7 +59,12 @@ enum rmnet_ioctl_extended_cmds_e {
 	RMNET_IOCTL_SET_SLEEP_STATE            = 0x0014,   /* Set sleep state */
 	RMNET_IOCTL_SET_XLAT_DEV_INFO          = 0x0015,   /* xlat dev name   */
 	RMNET_IOCTL_DEREGISTER_DEV             = 0x0016,   /* Dereg a net dev */
+<<<<<<< HEAD
 	RMNET_IOCTL_EXTENDED_MAX               = 0x0017
+=======
+	RMNET_IOCTL_GET_SG_SUPPORT             = 0x0017,   /* Query sg support*/
+	RMNET_IOCTL_EXTENDED_MAX               = 0x0018
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 };
 
 /* Return values for the RMNET_IOCTL_GET_SUPPORTED_FEATURES IOCTL */

@@ -66,3 +66,7 @@ obj-$(CONFIG_ZBUD)	+= zbud.o
 obj-$(CONFIG_ZSMALLOC)	+= zsmalloc.o
 obj-$(CONFIG_GENERIC_EARLY_IOREMAP) += early_ioremap.o
 obj-$(CONFIG_PROCESS_RECLAIM)	+= process_reclaim.o
+<<<<<<< HEAD
+=======
+obj-$(CONFIG_ZSMALLOC)	+= zsmalloc.o
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45

@@ -139,7 +139,11 @@ void unix_inflight(struct user_struct *user, struct file *fp)
 		}
 		unix_tot_inflight++;
 	}
+<<<<<<< HEAD
 	user->unix_inflight++;
+=======
+	fp->f_cred->user->unix_inflight++;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	spin_unlock(&unix_gc_lock);
 }
 
@@ -152,13 +156,20 @@ void unix_notinflight(struct user_struct *user, struct file *fp)
 	if (s) {
 		struct unix_sock *u = unix_sk(s);
 
+<<<<<<< HEAD
 		BUG_ON(!atomic_long_read(&u->inflight));
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		BUG_ON(list_empty(&u->link));
 		if (atomic_long_dec_and_test(&u->inflight))
 			list_del_init(&u->link);
 		unix_tot_inflight--;
 	}
+<<<<<<< HEAD
 	user->unix_inflight--;
+=======
+	fp->f_cred->user->unix_inflight--;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	spin_unlock(&unix_gc_lock);
 }
 

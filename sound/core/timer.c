@@ -742,8 +742,13 @@ void snd_timer_interrupt(struct snd_timer * timer, unsigned long ticks_left)
 			ti->cticks = ti->ticks;
 		} else {
 			ti->flags &= ~SNDRV_TIMER_IFLG_RUNNING;
+<<<<<<< HEAD
 			--timer->running;
 			list_del_init(&ti->active_list);
+=======
+			if (--timer->running)
+				list_del_init(&ti->active_list);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		}
 		if ((timer->hw.flags & SNDRV_TIMER_HW_TASKLET) ||
 		    (ti->flags & SNDRV_TIMER_IFLG_FAST))
@@ -1939,6 +1944,7 @@ static ssize_t snd_timer_user_read(struct file *file, char __user *buffer,
 {
 	struct snd_timer_user *tu;
 	long result = 0, unit;
+	int qhead;
 	int err = 0;
 
 	tu = file->private_data;
@@ -1951,7 +1957,7 @@ static ssize_t snd_timer_user_read(struct file *file, char __user *buffer,
 
 			if ((file->f_flags & O_NONBLOCK) != 0 || result > 0) {
 				err = -EAGAIN;
-				break;
+				goto _error;
 			}
 
 			set_current_state(TASK_INTERRUPTIBLE);
@@ -1968,46 +1974,58 @@ static ssize_t snd_timer_user_read(struct file *file, char __user *buffer,
 
 			if (tu->disconnected) {
 				err = -ENODEV;
+<<<<<<< HEAD
 				break;
+=======
+				goto _error;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 			}
 			if (signal_pending(current)) {
 				err = -ERESTARTSYS;
-				break;
+				goto _error;
 			}
 		}
 
+		qhead = tu->qhead++;
+		tu->qhead %= tu->queue_size;
 		spin_unlock_irq(&tu->qlock);
-		if (err < 0)
-			goto _error;
 
 		mutex_lock(&tu->ioctl_lock);
 		if (tu->tread) {
+<<<<<<< HEAD
 			if (copy_to_user(buffer, &tu->tqueue[tu->qhead++],
 					 sizeof(struct snd_timer_tread))) {
 				mutex_unlock(&tu->ioctl_lock);
+=======
+			if (copy_to_user(buffer, &tu->tqueue[qhead],
+					 sizeof(struct snd_timer_tread)))
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 				err = -EFAULT;
-				goto _error;
-			}
 		} else {
+<<<<<<< HEAD
 			if (copy_to_user(buffer, &tu->queue[tu->qhead++],
 					 sizeof(struct snd_timer_read))) {
 				mutex_unlock(&tu->ioctl_lock);
+=======
+			if (copy_to_user(buffer, &tu->queue[qhead],
+					 sizeof(struct snd_timer_read)))
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 				err = -EFAULT;
-				goto _error;
-			}
 		}
 		mutex_unlock(&tu->ioctl_lock);
 
-		tu->qhead %= tu->queue_size;
-
-		result += unit;
-		buffer += unit;
-
 		spin_lock_irq(&tu->qlock);
 		tu->qused--;
+		if (err < 0)
+			goto _error;
+		result += unit;
+		buffer += unit;
 	}
-	spin_unlock_irq(&tu->qlock);
  _error:
+<<<<<<< HEAD
+=======
+	spin_unlock_irq(&tu->qlock);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	mutex_unlock(&tu->ioctl_lock);
 	return result > 0 ? result : err;
 }

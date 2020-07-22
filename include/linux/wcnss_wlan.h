@@ -33,6 +33,10 @@ struct wcnss_wlan_config {
 	int	is_pronto_v3;
 	void __iomem	*msm_wcnss_base;
 	int	iris_id;
+<<<<<<< HEAD
+=======
+	int	vbatt;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 };
 
 enum {
@@ -50,6 +54,11 @@ enum {
 	WCNSS_WLAN_MAX_GPIO,
 };
 
+#define WCNSS_VBATT_THRESHOLD           3500000
+#define WCNSS_VBATT_GUARD               20000
+#define WCNSS_VBATT_HIGH                3700000
+#define WCNSS_VBATT_LOW                 3300000
+#define WCNSS_VBATT_INITIAL             3000000
 #define WCNSS_WLAN_IRQ_INVALID -1
 #define HAVE_WCNSS_SUSPEND_RESUME_NOTIFY 1
 #define HAVE_WCNSS_RESET_INTR 1
@@ -71,6 +80,10 @@ enum {
 #define WLAN_RF_DATA2_SHIFT		2
 #define PRONTO_PMU_OFFSET       0x1004
 #define WCNSS_PMU_CFG_GC_BUS_MUX_SEL_TOP   BIT(5)
+<<<<<<< HEAD
+=======
+#define WLAN_NV_NAME_SIZE  50
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 struct device *wcnss_wlan_get_device(void);
 void wcnss_get_monotonic_boottime(struct timespec *ts);
@@ -96,6 +109,7 @@ int wcnss_req_power_on_lock(char *driver_name);
 int wcnss_free_power_on_lock(char *driver_name);
 unsigned int wcnss_get_serial_number(void);
 int wcnss_get_wlan_mac_address(char mac_addr[WLAN_MAC_ADDR_SIZE]);
+int wcnss_get_wlan_nv_name(char nv_name[WLAN_NV_NAME_SIZE]);
 void wcnss_allow_suspend(void);
 void wcnss_prevent_suspend(void);
 int wcnss_hardware_type(void);

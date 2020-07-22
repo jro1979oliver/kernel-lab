@@ -14,6 +14,7 @@
 #include <linux/backing-dev.h>
 #include <linux/sysctl.h>
 #include <linux/sysfs.h>
+#include <linux/compaction.h>
 #include <linux/balloon_compaction.h>
 #include <linux/page-isolation.h>
 #include <linux/fb.h>
@@ -423,19 +424,44 @@ static void acct_isolated(struct zone *zone, bool locked, struct compact_control
 	}
 }
 
-/* Similar to reclaim, but different enough that they don't share logic */
-static bool too_many_isolated(struct zone *zone)
+static bool __too_many_isolated(struct zone *zone, int safe)
 {
 	unsigned long active, inactive, isolated;
 
-	inactive = zone_page_state(zone, NR_INACTIVE_FILE) +
-					zone_page_state(zone, NR_INACTIVE_ANON);
-	active = zone_page_state(zone, NR_ACTIVE_FILE) +
-					zone_page_state(zone, NR_ACTIVE_ANON);
-	isolated = zone_page_state(zone, NR_ISOLATED_FILE) +
-					zone_page_state(zone, NR_ISOLATED_ANON);
+	if (safe) {
+		inactive = zone_page_state_snapshot(zone, NR_INACTIVE_FILE) +
+			zone_page_state_snapshot(zone, NR_INACTIVE_ANON);
+		active = zone_page_state_snapshot(zone, NR_ACTIVE_FILE) +
+			zone_page_state_snapshot(zone, NR_ACTIVE_ANON);
+		isolated = zone_page_state_snapshot(zone, NR_ISOLATED_FILE) +
+			zone_page_state_snapshot(zone, NR_ISOLATED_ANON);
+	} else {
+		inactive = zone_page_state(zone, NR_INACTIVE_FILE) +
+			zone_page_state(zone, NR_INACTIVE_ANON);
+		active = zone_page_state(zone, NR_ACTIVE_FILE) +
+			zone_page_state(zone, NR_ACTIVE_ANON);
+		isolated = zone_page_state(zone, NR_ISOLATED_FILE) +
+			zone_page_state(zone, NR_ISOLATED_ANON);
+	}
 
 	return isolated > (inactive + active) / 2;
+}
+
+/* Similar to reclaim, but different enough that they don't share logic */
+static bool too_many_isolated(struct compact_control *cc)
+{
+	/*
+	 * __too_many_isolated(safe=0) is fast but inaccurate, because it
+	 * doesn't account for the vm_stat_diff[] counters.  So if it looks
+	 * like too_many_isolated() is about to return true, fall back to the
+	 * slower, more accurate zone_page_state_snapshot().
+	 */
+	if (unlikely(__too_many_isolated(cc->zone, 0))) {
+		if (cc->sync)
+			return __too_many_isolated(cc->zone, 1);
+	}
+
+	return false;
 }
 
 /**
@@ -469,6 +495,7 @@ isolate_migratepages_range(struct zone *zone, struct compact_control *cc,
 	struct lruvec *lruvec;
 	unsigned long flags = 0;
 	bool locked = false;
+	int err;
 	struct page *page = NULL, *valid_page = NULL;
 
 	/*
@@ -476,7 +503,7 @@ isolate_migratepages_range(struct zone *zone, struct compact_control *cc,
 	 * list by either parallel reclaimers or compaction. If there are,
 	 * delay for some time until fewer pages are isolated
 	 */
-	while (unlikely(too_many_isolated(zone))) {
+	while (unlikely(too_many_isolated(cc))) {
 		/* async migration should just abort */
 		if (!cc->sync)
 			return 0;
@@ -550,11 +577,24 @@ isolate_migratepages_range(struct zone *zone, struct compact_control *cc,
 
 		/*
 		 * Check may be lockless but that's ok as we recheck later.
-		 * It's possible to migrate LRU pages and balloon pages
-		 * Skip any other type of page
+		 * It's possible to migrate LRU pages and balloon and mobile
+		 * pages. Skip any other type of page
 		 */
 		if (!PageLRU(page)) {
-			if (unlikely(balloon_page_movable(page))) {
+			if (unlikely(mobile_page(page))) {
+				err = mobilepage_isolate(page);
+				if (unlikely(err)) {
+					if (err == -EAGAIN)
+						cc->retry = cc->sync;
+					continue;
+				}
+				/* Successfully isolated */
+				cc->finished_update_migrate = true;
+				list_add(&page->lru, migratelist);
+				cc->nr_migratepages++;
+				nr_isolated++;
+				goto check_compact_cluster;
+			} else if (unlikely(balloon_page_movable(page))) {
 				if (locked && balloon_page_isolate(page)) {
 					/* Successfully isolated */
 					cc->finished_update_migrate = true;
@@ -1207,11 +1247,18 @@ static void __compact_pgdat(pg_data_t *pgdat, struct compact_control *cc)
 		cc->nr_freepages = 0;
 		cc->nr_migratepages = 0;
 		cc->zone = zone;
+		cc->passes = 0;
+		cc->retry = false;
 		INIT_LIST_HEAD(&cc->freepages);
 		INIT_LIST_HEAD(&cc->migratepages);
 
-		if (cc->order == -1 || !compaction_deferred(zone, cc->order))
-			compact_zone(zone, cc);
+		if (cc->order == -1 || !compaction_deferred(zone, cc->order)) {
+			do {
+				cc->retry = false;
+				compact_zone(zone, cc);
+			} while (cc->retry &&
+				 cc->passes++ < COMPACTION_PASSES_MAX);
+		}
 
 		if (cc->order > 0) {
 			int alloc_flags = 0;
@@ -1282,6 +1329,18 @@ int sysctl_extfrag_handler(struct ctl_table *table, int write,
 			void __user *buffer, size_t *length, loff_t *ppos)
 {
 	proc_dointvec_minmax(table, write, buffer, length, ppos);
+
+	return 0;
+}
+
+int sysctl_mobile_page_compaction = 0;
+
+int sysctl_mobile_page_compaction_handler(struct ctl_table *table, int write,
+			void __user *buffer, size_t *length, loff_t *ppos)
+{
+	/* only allow mobile page compaction to be enabled */
+	if (!write || !sysctl_mobile_page_compaction)
+		proc_dointvec_minmax(table, write, buffer, length, ppos);
 
 	return 0;
 }

@@ -2368,8 +2368,13 @@ struct sk_buff *__skb_gso_segment(struct sk_buff *skb,
 		int err;
 
 		/* We're going to init ->check field in TCP or UDP header */
+<<<<<<< HEAD
 		err = skb_cow_head(skb, 0);
 		if (err < 0)
+=======
+		if (skb_header_cloned(skb) &&
+		    (err = pskb_expand_head(skb, 0, 0, GFP_ATOMIC)))
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 			return ERR_PTR(err);
 	}
 
@@ -6067,8 +6072,13 @@ static int dev_cpu_callback(struct notifier_block *nfb,
 	 */
 	while (!list_empty(&oldsd->poll_list)) {
 		struct napi_struct *napi = list_first_entry(&oldsd->poll_list,
+<<<<<<< HEAD
 							    struct napi_struct,
 							    poll_list);
+=======
+							struct napi_struct,
+							poll_list);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 		list_del_init(&napi->poll_list);
 		if (napi->poll == process_backlog)
@@ -6082,11 +6092,15 @@ static int dev_cpu_callback(struct notifier_block *nfb,
 
 	/* Process offline CPU's input_pkt_queue */
 	while ((skb = __skb_dequeue(&oldsd->process_queue))) {
-		netif_rx(skb);
+		kfree_skb(skb);
 		input_queue_head_incr(oldsd);
 	}
 	while ((skb = skb_dequeue(&oldsd->input_pkt_queue))) {
+<<<<<<< HEAD
 		netif_rx(skb);
+=======
+		kfree_skb(skb);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		input_queue_head_incr(oldsd);
 	}
 

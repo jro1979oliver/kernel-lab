@@ -426,7 +426,11 @@ static int unix_dgram_peer_wake_me(struct sock *sk, struct sock *other)
 	return 0;
 }
 
+<<<<<<< HEAD
 static inline int unix_writable(struct sock *sk)
+=======
+static int unix_writable(const struct sock *sk)
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 {
 	return (atomic_read(&sk->sk_wmem_alloc) << 2) <= sk->sk_sndbuf;
 }
@@ -1024,6 +1028,19 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	atomic_set(&addr->refcnt, 1);
 
 	if (sun_path[0]) {
+<<<<<<< HEAD
+=======
+		struct path path = {0};
+		umode_t mode = S_IFSOCK |
+		       (SOCK_INODE(sock)->i_mode & ~current_umask());
+		err = unix_mknod(sun_path, mode, &path);
+		if (err) {
+			if (err == -EEXIST)
+				err = -EADDRINUSE;
+			unix_release_addr(addr);
+			goto out_up;
+		}
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 		addr->hash = UNIX_HASH_SIZE;
 		hash = path.dentry->d_inode->i_ino & (UNIX_HASH_SIZE-1);
 		spin_lock(&unix_table_lock);
@@ -1537,7 +1554,11 @@ static int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
 		return -ENOMEM;
 
 	for (i = scm->fp->count - 1; i >= 0; i--)
+<<<<<<< HEAD
 		unix_inflight(scm->fp->user, scm->fp->fp[i]);
+=======
+		unix_inflight(scm->fp->fp[i]);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	return max_level;
 }
 

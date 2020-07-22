@@ -22,7 +22,11 @@ struct zpool {
 
 	struct zpool_driver *driver;
 	void *pool;
+<<<<<<< HEAD
 	struct zpool_ops *ops;
+=======
+	const struct zpool_ops *ops;
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 
 	struct list_head list;
 };
@@ -73,6 +77,7 @@ int zpool_unregister_driver(struct zpool_driver *driver)
 }
 EXPORT_SYMBOL(zpool_unregister_driver);
 
+<<<<<<< HEAD
 /**
  * zpool_evict() - evict callback from a zpool implementation.
  * @pool:	pool to evict from.
@@ -100,6 +105,8 @@ int zpool_evict(void *pool, unsigned long handle)
 }
 EXPORT_SYMBOL(zpool_evict);
 
+=======
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 static struct zpool_driver *zpool_get_driver(char *type)
 {
 	struct zpool_driver *driver;
@@ -142,7 +149,11 @@ static void zpool_put_driver(struct zpool_driver *driver)
  * Returns: New zpool on success, NULL on failure.
  */
 struct zpool *zpool_create_pool(char *type, char *name, gfp_t gfp,
+<<<<<<< HEAD
 		struct zpool_ops *ops)
+=======
+		const struct zpool_ops *ops)
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 {
 	struct zpool_driver *driver;
 	struct zpool *zpool;
@@ -170,7 +181,11 @@ struct zpool *zpool_create_pool(char *type, char *name, gfp_t gfp,
 
 	zpool->type = driver->type;
 	zpool->driver = driver;
+<<<<<<< HEAD
 	zpool->pool = driver->create(name, gfp, ops);
+=======
+	zpool->pool = driver->create(name, gfp, ops, zpool);
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 	zpool->ops = ops;
 
 	if (!zpool->pool) {

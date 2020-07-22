@@ -662,7 +662,11 @@ void cond_compute_av(struct avtab *ctab, struct avtab_key *key,
 		if ((u16)(AVTAB_AUDITALLOW|AVTAB_ENABLED) ==
 		    (node->key.specified & (AVTAB_AUDITALLOW|AVTAB_ENABLED)))
 			avd->auditallow |= node->datum.u.data;
+<<<<<<< HEAD
 		if ((node->key.specified & AVTAB_ENABLED) &&
+=======
+		if (xperms && (node->key.specified & AVTAB_ENABLED) &&
+>>>>>>> b8722a2853752c400da2b5f42d4dc7b82e15cd45
 				(node->key.specified & AVTAB_XPERMS))
 			services_compute_xperms_drivers(xperms, node);
 	}
